@@ -1,0 +1,24 @@
+{
+  "name": "slashless",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "test": "bun test",
+    "test:auth": "bun test tests/lib/auth",
+    "test:strings": "bun test tests/lib/strings",
+    "test:numeric": "bun test tests/lib/numeric",
+    "test:keys": "bun test tests/lib/keys",
+    "test:lists": "bun test tests/lib/lists",
+    "test:sets": "bun test tests/lib/sets",
+    "test:hashes": "bun test tests/lib/hashes",
+    "test:sorted-sets": "bun test tests/lib/sorted-sets",
+    "test:utils": "bun test tests/lib/utils"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.34.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
+

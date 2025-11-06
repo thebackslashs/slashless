@@ -1,0 +1,25 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+
+  stashless:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - SLASHLESS_REDIS_HOST=redis
+      - SLASHLESS_REDIS_PORT=6379
+      - SLASHLESS_TOKEN=${SLASHLESS_TOKEN:-change-me-in-production}
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+volumes:
+  redis-data:
