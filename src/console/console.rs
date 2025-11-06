@@ -155,9 +155,7 @@ impl Console {
                 if let Some(ref sender) = self.sender {
                     sender
                         .send(ConsoleCommand::UpdateServerStatus(status))
-                        .map_err(|e| {
-                            io::Error::other(format!("Failed to send command: {}", e))
-                        })?;
+                        .map_err(|e| io::Error::other(format!("Failed to send command: {}", e)))?;
                 }
             }
             ConsoleMode::Standard => {
@@ -173,9 +171,7 @@ impl Console {
                 if let Some(ref sender) = self.sender {
                     sender
                         .send(ConsoleCommand::UpdateRedisStatus(status))
-                        .map_err(|e| {
-                            io::Error::other(format!("Failed to send command: {}", e))
-                        })?;
+                        .map_err(|e| io::Error::other(format!("Failed to send command: {}", e)))?;
                 }
             }
             ConsoleMode::Standard => {
