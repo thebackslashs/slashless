@@ -88,9 +88,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      - name: Install Bun
-        uses: oven-sh/setup-bun@v2
-
       - name: Build server
         run: cargo build --release
 
@@ -130,6 +127,12 @@ jobs:
           echo "Server failed to start. Logs:"
           cat server.log || true
           exit 1
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
 
       - name: Run tests
         run: bun test
