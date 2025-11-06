@@ -1,43 +1,123 @@
 name: CI
 
 on:
-    push:
-        branches: ["**"]
-    pull_request:
-        branches: ["**"]
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
 
 jobs:
-    check:
-        name: Format, Lint, and Build
-        runs-on: ubuntu-latest
+  check:
+    name: Format, Lint, and Build
+    runs-on: ubuntu-latest
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            - name: Install Rust
-              uses: dtolnay/rust-toolchain@stable
-              with:
-                  components: rustfmt, clippy
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
 
-            - name: Cache Cargo dependencies
-              uses: actions/cache@v4
-              with:
-                  path: |
-                      ~/.cargo/bin/
-                      ~/.cargo/registry/index/
-                      ~/.cargo/registry/cache/
-                      ~/.cargo/git/db/
-                      target/
-                  key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-                  restore-keys: |
-                      ${{ runner.os }}-cargo-
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
 
-            - name: Check formatting
-              run: cargo fmt --check
+      - name: Check formatting
+        run: cargo fmt --check
 
-            - name: Run clippy
-              run: cargo clippy -- -D warnings
+      - name: Run clippy
+        run: cargo clippy -- -D warnings
 
-            - name: Build
-              run: cargo build --release
+      - name: Build
+        run: cargo build --release
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      SLASHLESS_REDIS_HOST: localhost
+      SLASHLESS_REDIS_PORT: 6379
+      SLASHLESS_TOKEN: your-secret-token
+      SLASHLESS_HOST: 0.0.0.0
+      SLASHLESS_PORT: 3000
+      SERVER_URL: http://localhost:3000
+      BEARER_TOKEN: your-secret-token
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Build server
+        run: cargo build --release
+
+      - name: Wait for Redis
+        run: |
+          timeout 30 bash -c 'until timeout 1 bash -c "</dev/tcp/localhost/6379" 2>/dev/null; do sleep 1; done'
+
+      - name: Start server
+        run: |
+          ./target/release/stashless &
+          echo $! > server.pid
+        env:
+          SLASHLESS_REDIS_HOST: localhost
+          SLASHLESS_REDIS_PORT: 6379
+          SLASHLESS_TOKEN: your-secret-token
+          SLASHLESS_HOST: 0.0.0.0
+          SLASHLESS_PORT: 3000
+
+      - name: Wait for server to be ready
+        run: |
+          timeout 30 bash -c 'until curl -f http://localhost:3000/ -H "Authorization: Bearer your-secret-token" -X POST -H "Content-Type: application/json" -d \'{"command":"PING"}\' > /dev/null 2>&1; do sleep 1; done'
+
+      - name: Run tests
+        run: bun test
+
+      - name: Stop server
+        if: always()
+        run: |
+          if [ -f server.pid ]; then
+              kill $(cat server.pid) || true
+              rm server.pid
+          fi
