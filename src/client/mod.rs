@@ -207,7 +207,7 @@ impl RedisPool {
                 // Log to console occasionally to show activity (every 10th connection)
                 static CONNECTION_COUNT: AtomicU32 = AtomicU32::new(0);
                 let count = CONNECTION_COUNT.fetch_add(1, Ordering::Relaxed);
-                if count.is_multiple_of(10) && count > 0 {
+                if count % 10 == 0 && count > 0 {
                     self.log_connection_success();
                 }
                 Ok(conn)
