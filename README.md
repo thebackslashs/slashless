@@ -33,6 +33,10 @@ Stashless is a self-hosted HTTP adapter for Redis that's fully compatible with t
 If you already have Redis running:
 
 ```bash
+# Pull the image
+docker pull ghcr.io/thebackslashs/stashless:latest
+
+# Run the container
 docker run -d \
   -p 3000:3000 \
   -e SLASHLESS_REDIS_HOST=your-redis-host \
