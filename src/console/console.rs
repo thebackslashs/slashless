@@ -156,10 +156,7 @@ impl Console {
                     sender
                         .send(ConsoleCommand::UpdateServerStatus(status))
                         .map_err(|e| {
-                            io::Error::new(
-                                io::ErrorKind::Other,
-                                format!("Failed to send command: {}", e),
-                            )
+                            io::Error::other(format!("Failed to send command: {}", e))
                         })?;
                 }
             }
@@ -177,10 +174,7 @@ impl Console {
                     sender
                         .send(ConsoleCommand::UpdateRedisStatus(status))
                         .map_err(|e| {
-                            io::Error::new(
-                                io::ErrorKind::Other,
-                                format!("Failed to send command: {}", e),
-                            )
+                            io::Error::other(format!("Failed to send command: {}", e))
                         })?;
                 }
             }

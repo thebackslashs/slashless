@@ -1,4 +1,5 @@
 pub mod banner;
+#[allow(clippy::module_inception)]
 pub mod console;
 pub mod render;
 pub mod state;
