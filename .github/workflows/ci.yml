@@ -100,8 +100,9 @@ jobs:
 
       - name: Start server
         run: |
-          ./target/release/stashless &
+          ./target/release/stashless > server.log 2>&1 &
           echo $! > server.pid
+          sleep 2
         env:
           SLASHLESS_REDIS_HOST: localhost
           SLASHLESS_REDIS_PORT: 6379
@@ -109,9 +110,26 @@ jobs:
           SLASHLESS_HOST: 0.0.0.0
           SLASHLESS_PORT: 3000
 
+      - name: Wait for server port
+        run: |
+          echo "Waiting for server to listen on port 3000..."
+          timeout 30 bash -c 'until timeout 1 bash -c "</dev/tcp/localhost/3000" 2>/dev/null; do sleep 1; done'
+          echo "Port 3000 is open"
+
       - name: Wait for server to be ready
         run: |
-          timeout 30 bash -c "until curl -f http://localhost:3000/ -H 'Authorization: Bearer your-secret-token' -X POST -H 'Content-Type: application/json' -d '{\"command\":\"PING\"}' > /dev/null 2>&1; do sleep 1; done"
+          echo "Waiting for server to respond to requests..."
+          for i in {1..30}; do
+            if curl -f -s http://localhost:3000/ > /dev/null 2>&1; then
+              echo "Server is ready!"
+              exit 0
+            fi
+            echo "Attempt $i/30 failed, retrying..."
+            sleep 1
+          done
+          echo "Server failed to start. Logs:"
+          cat server.log || true
+          exit 1
 
       - name: Run tests
         run: bun test
