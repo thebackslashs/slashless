@@ -12,38 +12,36 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> Result<Self, String> {
-        let redis_host = env::var("SLASHLESS_REDIS_HOST")
-            .unwrap_or_else(|_| "127.0.0.1".to_string());
-        
+        let redis_host =
+            env::var("SLASHLESS_REDIS_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
+
         let redis_port = env::var("SLASHLESS_REDIS_PORT")
             .unwrap_or_else(|_| "6379".to_string())
             .parse::<u16>()
             .map_err(|_| "SLASHLESS_REDIS_PORT must be a valid port number")?;
-        
-        let host = env::var("SLASHLESS_HOST")
-            .unwrap_or_else(|_| "0.0.0.0".to_string());
-        
+
+        let host = env::var("SLASHLESS_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
+
         let port = env::var("SLASHLESS_PORT")
             .unwrap_or_else(|_| "3000".to_string())
             .parse::<u16>()
             .map_err(|_| "SLASHLESS_PORT must be a valid port number")?;
-        
-        let token = env::var("SLASHLESS_TOKEN")
-            .map_err(|_| "SLASHLESS_TOKEN is required")?;
-        
+
+        let token = env::var("SLASHLESS_TOKEN").map_err(|_| "SLASHLESS_TOKEN is required")?;
+
         if token.is_empty() {
             return Err("SLASHLESS_TOKEN cannot be empty".to_string());
         }
-        
+
         let max_connections = env::var("SLASHLESS_MAX_CONNECTION")
             .unwrap_or_else(|_| "3".to_string())
             .parse::<usize>()
             .map_err(|_| "SLASHLESS_MAX_CONNECTION must be a valid positive integer")?;
-        
+
         if max_connections == 0 {
             return Err("SLASHLESS_MAX_CONNECTION must be greater than 0".to_string());
         }
-        
+
         Ok(Self {
             redis_host,
             redis_port,
@@ -53,15 +51,15 @@ impl Config {
             max_connections,
         })
     }
-    
+
     pub fn redis_url(&self) -> String {
         format!("redis://{}:{}", self.redis_host, self.redis_port)
     }
-    
+
     pub fn server_address(&self) -> String {
         format!("{}:{}", self.host, self.port)
     }
-    
+
     pub fn masked_token(&self) -> String {
         if self.token.len() <= 8 {
             format!("{}***", &self.token[..1.min(self.token.len())])
