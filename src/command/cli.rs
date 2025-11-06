@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 use console::{style, Emoji};
 use crate::config::Config;
 use crate::redis_client::RedisClientWrapper;
-use crate::command::CommandExecutor;
+use crate::command::executor::CommandExecutor;
 
 #[derive(Parser)]
 #[command(name = "stashless")]
@@ -193,3 +193,4 @@ pub fn handle_version() -> Result<(), String> {
     println!("{}", style("Redis-over-HTTP adapter compatible with Upstash SDK").dim());
     Ok(())
 }
+

@@ -15,6 +15,7 @@ pub enum AppError {
     #[error("Malformed request: {0}")]
     MalformedRequest(String),
 
+    #[allow(dead_code)]
     #[error("Connection error: {0}")]
     ConnectionError(String),
 

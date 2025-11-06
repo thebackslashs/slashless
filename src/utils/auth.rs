@@ -1,5 +1,5 @@
+use super::AppError;
 use crate::config::Config;
-use crate::errors::AppError;
 use axum::extract::Request;
 
 pub fn extract_bearer_token(request: &Request) -> Result<String, AppError> {

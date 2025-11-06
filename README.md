@@ -47,10 +47,6 @@ docker run -d \
 
 That's it! The API is available at `http://localhost:3000`.
 
-**Available Docker image tags:**
-- `latest` - Latest build from main branch
-- `0.1.0` (or current version) - Specific version tag
-- All images are automatically built and pushed to [GitHub Container Registry](https://github.com/thebackslashs/slashless/pkgs/container/stashless) on every push to main
 
 ### Docker Compose
 
@@ -64,7 +60,6 @@ export SLASHLESS_TOKEN=your-secret-token-here
 # Start everything
 docker-compose up -d
 ```              
-
 
 ### From Source
 
@@ -86,6 +81,30 @@ export SLASHLESS_TOKEN=your-secret-token
 
 All configuration is done via environment variables. Only `SLASHLESS_TOKEN` is required.
 
+### Creating a New Configuration
+
+To create a new configuration, you can use a `.env` file in your project root:
+
+```bash
+# Generate a secure token first (or use stashless generate-token)
+# Then create a .env file:
+
+cat > .env << EOF
+SLASHLESS_TOKEN=your-secret-token-here
+SLASHLESS_REDIS_HOST=127.0.0.1
+SLASHLESS_REDIS_PORT=6379
+SLASHLESS_HOST=0.0.0.0
+SLASHLESS_PORT=3000
+SLASHLESS_MAX_CONNECTION=3
+SLASHLESS_MAX_RETRY=-1
+SLASHLESS_MODE=standard
+EOF
+```
+
+Or use the `stashless generate-token` command to generate a secure token, then add it to your `.env` file.
+
+### Configuration Variables
+
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `SLASHLESS_REDIS_HOST` | `127.0.0.1` | Redis host |
@@ -94,6 +113,25 @@ All configuration is done via environment variables. Only `SLASHLESS_TOKEN` is r
 | `SLASHLESS_PORT` | `3000` | HTTP port |
 | `SLASHLESS_TOKEN` | **Required** | Bearer token for auth |
 | `SLASHLESS_MAX_CONNECTION` | `3` | Connection pool size |
+| `SLASHLESS_MAX_RETRY` | `-1` | Maximum Redis connection retry attempts (-1 for unlimited) |
+| `SLASHLESS_MODE` | `standard` | Console display mode (`standard` or `rich`) |
+
+### Console Modes
+
+Stashless supports two console display modes:
+
+- **`standard`** (default): Simple text-based output with standard logging. Best for production environments, CI/CD pipelines, and when running in the background.
+- **`rich`**: Enhanced terminal UI with real-time status updates, colored output, and interactive console. Best for local development and monitoring.
+
+Set the mode using the `SLASHLESS_MODE` environment variable:
+
+```bash
+# Standard mode (default)
+export SLASHLESS_MODE=standard
+
+# Rich mode
+export SLASHLESS_MODE=rich
+```
 
 You can also use a `.env` file - just export it before running.
 
