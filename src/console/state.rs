@@ -13,6 +13,7 @@ pub struct ConsoleState {
     pub connections: usize,
     pub max_retry: i32,
     pub version: String,
+    pub is_secure: bool,
 }
 
 impl ConsoleState {
@@ -22,6 +23,7 @@ impl ConsoleState {
         connections: usize,
         max_retry: i32,
         version: String,
+        is_secure: bool,
     ) -> Self {
         Self {
             server_status: Status::Starting,
@@ -31,6 +33,7 @@ impl ConsoleState {
             connections,
             max_retry,
             version,
+            is_secure,
         }
     }
 }

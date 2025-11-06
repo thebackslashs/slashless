@@ -1,11 +1,14 @@
 mod client;
+mod command;
 mod config;
 mod console;
 mod handlers;
 mod http;
 mod utils;
 
+use clap::Parser;
 use client::RedisPool;
+use command::cli::Cli;
 use config::Config;
 use http::routes::create_router;
 use http::server::bind_server;
@@ -22,6 +25,26 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Parse command line arguments
+    let cli = Cli::parse();
+
+    // Handle healthcheck flag (doesn't require SLASHLESS_TOKEN to be validated for server start)
+    if cli.healthcheck {
+        match command::cli::handle_healthcheck().await {
+            Ok(()) => std::process::exit(0),
+            Err(e) => {
+                eprintln!("Health check failed: {}", e);
+                std::process::exit(1);
+            }
+        }
+    }
+
+    // Handle boring flag - set environment variable to override mode
+    if cli.boring {
+        std::env::set_var("SLASHLESS_MODE", "boring");
+    }
+
+    // For server startup, we need valid SLASHLESS_TOKEN
     // Initialize tracing subscriber
     let format = Format::default()
         .with_target(false)
@@ -40,12 +63,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .init();
 
-    // Load configuration first to get console mode
+    // Start server - Load configuration (SLASHLESS_TOKEN is optional)
     let config = match Config::from_env() {
         Ok(config) => config,
         Err(e) => {
             eprintln!("Configuration error: {}", e);
-            eprintln!("Please set SLASHLESS_TOKEN environment variable");
             std::process::exit(1);
         }
     };
@@ -59,6 +81,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         config.max_retry,
         VERSION.to_string(),
         config.console_mode.clone(),
+        config.is_secure(),
     )
     .map_err(|e| format!("Failed to initialize console: {}", e))?;
 
@@ -151,8 +174,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let console_for_shutdown = console.clone();
     let shutdown_signal: std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send>> =
         match config.console_mode {
-            config::ConsoleMode::Rich => {
-                // In rich mode, wait for Ctrl+C from the console's keyboard input handler
+            config::ConsoleMode::Standard => {
+                // In standard mode (rich TUI), wait for Ctrl+C from the console's keyboard input handler
                 if let Some(mut receiver) = shutdown_receiver {
                     Box::pin(async move {
                         // Wait for Ctrl+C signal from the console thread
@@ -176,8 +199,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     })
                 }
             }
-            config::ConsoleMode::Standard => {
-                // In standard mode, use standard tokio signal
+            config::ConsoleMode::Boring => {
+                // In boring mode, use standard tokio signal
                 Box::pin(async move {
                     tokio::signal::ctrl_c()
                         .await
@@ -199,7 +222,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         });
 
     // Always cleanup console to restore terminal state
-    if matches!(config.console_mode, config::ConsoleMode::Rich) {
+    if matches!(config.console_mode, config::ConsoleMode::Standard) {
         let _ = console.cleanup();
     }
 

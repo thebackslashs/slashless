@@ -21,13 +21,17 @@ async fn root() -> Json<serde_json::Value> {
     Json(json!("Welcome to Serverless Redis HTTP!"))
 }
 
+async fn health() -> Json<serde_json::Value> {
+    Json(json!({"status": "ok"}))
+}
+
 async fn handle_command_with_auth(
     State(state): State<AppState>,
     request: Request<Body>,
 ) -> Result<Json<serde_json::Value>, AppError> {
     // Extract and validate token
     let token = extract_bearer_token(&request)?;
-    validate_token(&token, &state.config)?;
+    validate_token(token.as_deref(), &state.config)?;
 
     // Check encoding header
     let encoding_enabled = check_encoding_header(&request);
@@ -48,7 +52,7 @@ async fn handle_pipeline_with_auth(
 ) -> Result<Json<serde_json::Value>, AppError> {
     // Extract and validate token
     let token = extract_bearer_token(&request)?;
-    validate_token(&token, &state.config)?;
+    validate_token(token.as_deref(), &state.config)?;
 
     // Check encoding header
     let encoding_enabled = check_encoding_header(&request);
@@ -69,7 +73,7 @@ async fn handle_transaction_with_auth(
 ) -> Result<Json<serde_json::Value>, AppError> {
     // Extract and validate token
     let token = extract_bearer_token(&request)?;
-    validate_token(&token, &state.config)?;
+    validate_token(token.as_deref(), &state.config)?;
 
     // Check encoding header
     let encoding_enabled = check_encoding_header(&request);
@@ -88,6 +92,7 @@ pub fn create_router(pool: RedisPool, config: Config) -> Router {
     Router::new()
         .route("/", get(root))
         .route("/", post(handle_command_with_auth))
+        .route("/health", get(health))
         .route("/pipeline", post(handle_pipeline_with_auth))
         .route("/multi-exec", post(handle_transaction_with_auth))
         .with_state(AppState { pool, config })

@@ -26,9 +26,10 @@ impl Console {
         max_retry: i32,
         version: String,
         mode: ConsoleMode,
+        is_secure: bool,
     ) -> io::Result<(Self, Option<mpsc::UnboundedReceiver<()>>)> {
         match mode {
-            ConsoleMode::Rich => {
+            ConsoleMode::Standard => {
                 // Clear screen first
                 print!("\x1B[2J\x1B[1;1H");
                 io::stdout().flush().unwrap();
@@ -45,11 +46,12 @@ impl Console {
 
                 // Create initial state
                 let mut state = ConsoleState::new(
-                    server_address,
-                    redis_address,
+                    server_address.clone(),
+                    redis_address.clone(),
                     connections,
                     max_retry,
-                    version,
+                    version.clone(),
+                    is_secure,
                 );
 
                 // Initialize terminal in a blocking task
@@ -110,7 +112,7 @@ impl Console {
                         // Render if we have updates
                         if should_render {
                             if let Err(e) = terminal.draw(|f| {
-                                render_console(f, &state, &ConsoleMode::Rich);
+                                render_console(f, &state, &ConsoleMode::Standard);
                             }) {
                                 tracing::error!("Failed to render console: {}", e);
                                 break;
@@ -130,9 +132,9 @@ impl Console {
                     Some(shutdown_receiver),
                 ))
             }
-            ConsoleMode::Standard => {
-                // Standard mode: no console UI, just log to tracing
-                tracing::info!("Starting server in standard mode");
+            ConsoleMode::Boring => {
+                // Boring mode: no console UI, just log to tracing
+                tracing::info!("Starting server in boring mode");
                 tracing::info!("Server: {}", server_address);
                 tracing::info!("Redis: {}", redis_address);
                 tracing::info!("Max connections: {}", connections);
@@ -144,6 +146,13 @@ impl Console {
                 tracing::info!("Max retry: {}", retry_display);
                 tracing::info!("Version: {}", version);
 
+                // Show security warning if not secure
+                if !is_secure {
+                    tracing::warn!("UNSAFE MODE: Server is running WITHOUT AUTHENTICATION");
+                    tracing::warn!("Anyone can access your Redis instance!");
+                    tracing::warn!("Set SLASHLESS_TOKEN environment variable to enable security");
+                }
+
                 Ok((Self { sender: None, mode }, None))
             }
         }
@@ -151,14 +160,14 @@ impl Console {
 
     pub fn update_server_status(&self, status: Status) -> io::Result<()> {
         match &self.mode {
-            ConsoleMode::Rich => {
+            ConsoleMode::Standard => {
                 if let Some(ref sender) = self.sender {
                     sender
                         .send(ConsoleCommand::UpdateServerStatus(status))
                         .map_err(|e| io::Error::other(format!("Failed to send command: {}", e)))?;
                 }
             }
-            ConsoleMode::Standard => {
+            ConsoleMode::Boring => {
                 tracing::info!("Server status: {}", status.text());
             }
         }
@@ -167,14 +176,14 @@ impl Console {
 
     pub fn update_redis_status(&self, status: Status) -> io::Result<()> {
         match &self.mode {
-            ConsoleMode::Rich => {
+            ConsoleMode::Standard => {
                 if let Some(ref sender) = self.sender {
                     sender
                         .send(ConsoleCommand::UpdateRedisStatus(status))
                         .map_err(|e| io::Error::other(format!("Failed to send command: {}", e)))?;
                 }
             }
-            ConsoleMode::Standard => {
+            ConsoleMode::Boring => {
                 tracing::info!("Redis status: {}", status.text());
             }
         }
@@ -183,10 +192,10 @@ impl Console {
 
     pub fn log_info(&self, message: String) -> io::Result<()> {
         match &self.mode {
-            ConsoleMode::Rich => {
-                // In rich mode, logs are ignored (not displayed)
-            }
             ConsoleMode::Standard => {
+                // In standard mode (rich TUI), logs are ignored (not displayed)
+            }
+            ConsoleMode::Boring => {
                 tracing::info!("{}", message);
             }
         }
@@ -195,10 +204,10 @@ impl Console {
 
     pub fn log_error(&self, message: String) -> io::Result<()> {
         match &self.mode {
-            ConsoleMode::Rich => {
-                // In rich mode, logs are ignored (not displayed)
-            }
             ConsoleMode::Standard => {
+                // In standard mode (rich TUI), logs are ignored (not displayed)
+            }
+            ConsoleMode::Boring => {
                 tracing::error!("{}", message);
             }
         }
@@ -207,10 +216,10 @@ impl Console {
 
     pub fn log_warn(&self, message: String) -> io::Result<()> {
         match &self.mode {
-            ConsoleMode::Rich => {
-                // In rich mode, logs are ignored (not displayed)
-            }
             ConsoleMode::Standard => {
+                // In standard mode (rich TUI), logs are ignored (not displayed)
+            }
+            ConsoleMode::Boring => {
                 tracing::warn!("{}", message);
             }
         }
@@ -220,10 +229,10 @@ impl Console {
     #[allow(dead_code)]
     pub fn log_debug(&self, message: String) -> io::Result<()> {
         match &self.mode {
-            ConsoleMode::Rich => {
-                // In rich mode, logs are ignored (not displayed)
-            }
             ConsoleMode::Standard => {
+                // In standard mode (rich TUI), logs are ignored (not displayed)
+            }
+            ConsoleMode::Boring => {
                 tracing::debug!("{}", message);
             }
         }
@@ -237,7 +246,7 @@ impl Console {
 
     pub fn cleanup(&self) -> io::Result<()> {
         match &self.mode {
-            ConsoleMode::Rich => {
+            ConsoleMode::Standard => {
                 // Restore terminal state - this must happen immediately
                 // First disable raw mode to restore normal terminal behavior
                 // This will stop ^C from being displayed
@@ -262,8 +271,8 @@ impl Console {
                 print!("\x1B[2J\x1B[1;1H");
                 let _ = io::stdout().flush();
             }
-            ConsoleMode::Standard => {
-                // Nothing to clean up in standard mode
+            ConsoleMode::Boring => {
+                // Nothing to clean up in boring mode
             }
         }
         Ok(())

@@ -58,5 +58,9 @@ LABEL org.opencontainers.image.title="Stashless" \
 # Expose port (default 3000, configurable via SLASHLESS_PORT)
 EXPOSE 3000
 
-# Default command
-CMD ["stashless", "serve"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD ["stashless", "--healthcheck"]
+
+# Default command - starts server
+CMD ["stashless"]

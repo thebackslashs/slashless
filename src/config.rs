@@ -2,15 +2,15 @@ use std::env;
 
 #[derive(Debug, Clone)]
 pub enum ConsoleMode {
-    Rich,
     Standard,
+    Boring,
 }
 
 impl ConsoleMode {
     pub fn from_str(s: &str) -> Self {
         match s.to_lowercase().as_str() {
+            "boring" => ConsoleMode::Boring,
             "standard" => ConsoleMode::Standard,
-            "rich" => ConsoleMode::Rich,
             _ => ConsoleMode::Standard,
         }
     }
@@ -45,11 +45,8 @@ impl Config {
             .parse::<u16>()
             .map_err(|_| "SLASHLESS_PORT must be a valid port number")?;
 
-        let token = env::var("SLASHLESS_TOKEN").map_err(|_| "SLASHLESS_TOKEN is required")?;
-
-        if token.is_empty() {
-            return Err("SLASHLESS_TOKEN cannot be empty".to_string());
-        }
+        // Token is now optional - if not provided, server runs without authentication
+        let token = env::var("SLASHLESS_TOKEN").unwrap_or_default();
 
         let max_connections = env::var("SLASHLESS_MAX_CONNECTION")
             .unwrap_or_else(|_| "3".to_string())
@@ -90,10 +87,16 @@ impl Config {
 
     #[allow(dead_code)]
     pub fn masked_token(&self) -> String {
-        if self.token.len() <= 8 {
+        if self.token.is_empty() {
+            "none (no security)".to_string()
+        } else if self.token.len() <= 8 {
             format!("{}***", &self.token[..1.min(self.token.len())])
         } else {
             format!("{}***", &self.token[..8])
         }
+    }
+
+    pub fn is_secure(&self) -> bool {
+        !self.token.is_empty()
     }
 }

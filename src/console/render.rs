@@ -15,21 +15,21 @@ pub fn render_console(f: &mut Frame, state: &ConsoleState, mode: &ConsoleMode) {
     // Calculate banner height
     let banner_height = 17;
 
-    // In rich mode, don't show logs section
+    // In standard mode (rich TUI), don't show logs section
     let vertical = match mode {
-        ConsoleMode::Rich => Layout::vertical([
+        ConsoleMode::Standard => Layout::vertical([
             Constraint::Length(banner_height),
             Constraint::Length(1),
-            Constraint::Length(2),
+            Constraint::Length(3),
             Constraint::Length(4),
         ])
         .split(area),
-        ConsoleMode::Standard => {
-            // This shouldn't be called in standard mode, but just in case
+        ConsoleMode::Boring => {
+            // This shouldn't be called in boring mode, but just in case
             Layout::vertical([
                 Constraint::Length(banner_height),
                 Constraint::Length(1),
-                Constraint::Length(2),
+                Constraint::Length(3),
                 Constraint::Length(4),
             ])
             .split(area)
@@ -39,13 +39,17 @@ pub fn render_console(f: &mut Frame, state: &ConsoleState, mode: &ConsoleMode) {
     // Render banner
     render_banner(f, vertical[0], &state.version);
 
-    // Status section
+    // Status section (now with 3 lines: Server, Redis, Security)
     let status_area = vertical[2];
-    let status_layout =
-        Layout::vertical([Constraint::Length(1), Constraint::Length(1)]).split(status_area);
+    let status_layout = Layout::vertical([
+        Constraint::Length(1),
+        Constraint::Length(1),
+        Constraint::Length(1),
+    ])
+    .split(status_area);
 
     // Server status
-    let server_label = "Server Status   ";
+    let server_label = "Server Status     ";
     let server_value = state.server_status.text();
     let server_line = Line::from(vec![
         Span::styled(server_label, Style::default()),
@@ -61,7 +65,7 @@ pub fn render_console(f: &mut Frame, state: &ConsoleState, mode: &ConsoleMode) {
     f.render_widget(server_para, server_area);
 
     // Redis status
-    let redis_label = "Redis Status    ";
+    let redis_label = "Redis Status      ";
     let redis_value = state.redis_status.text();
     let redis_line = Line::from(vec![
         Span::styled(redis_label, Style::default()),
@@ -76,6 +80,34 @@ pub fn render_console(f: &mut Frame, state: &ConsoleState, mode: &ConsoleMode) {
     };
     f.render_widget(redis_para, redis_area);
 
+    // Security status
+    let security_label = "Security Status   ";
+    let (security_value, security_style) = if state.is_secure {
+        (
+            "SECURE",
+            Style::default()
+                .fg(Color::Green)
+                .add_modifier(Modifier::BOLD),
+        )
+    } else {
+        (
+            "UNSAFE",
+            Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+        )
+    };
+    let security_line = Line::from(vec![
+        Span::styled(security_label, Style::default()),
+        Span::styled(security_value, security_style),
+    ]);
+    let security_para = Paragraph::new(security_line).alignment(Alignment::Left);
+    let security_area = Rect {
+        x: status_layout[2].x + 2,
+        y: status_layout[2].y,
+        width: status_layout[2].width.saturating_sub(2),
+        height: status_layout[2].height,
+    };
+    f.render_widget(security_para, security_area);
+
     // Config section
     let config_area = vertical[3];
     let config_layout = Layout::vertical([
@@ -87,7 +119,7 @@ pub fn render_console(f: &mut Frame, state: &ConsoleState, mode: &ConsoleMode) {
     .split(config_area);
 
     // Server config
-    let server_config_label = "Listen Address  ";
+    let server_config_label = "Listen Address    ";
     let server_config_line = Line::from(vec![
         Span::styled(server_config_label, Style::default().fg(Color::Gray)),
         Span::styled(
@@ -105,7 +137,7 @@ pub fn render_console(f: &mut Frame, state: &ConsoleState, mode: &ConsoleMode) {
     f.render_widget(server_config, server_config_area);
 
     // Redis config
-    let redis_config_label = "Redis Endpoint  ";
+    let redis_config_label = "Redis Endpoint    ";
     let redis_config_line = Line::from(vec![
         Span::styled(redis_config_label, Style::default().fg(Color::Gray)),
         Span::styled(
@@ -123,7 +155,7 @@ pub fn render_console(f: &mut Frame, state: &ConsoleState, mode: &ConsoleMode) {
     f.render_widget(redis_config, redis_config_area);
 
     // Connections config
-    let connections_config_label = "Pool Size       ";
+    let connections_config_label = "Pool Size         ";
     let connections_config_line = Line::from(vec![
         Span::styled(connections_config_label, Style::default().fg(Color::Gray)),
         Span::styled(
@@ -146,7 +178,7 @@ pub fn render_console(f: &mut Frame, state: &ConsoleState, mode: &ConsoleMode) {
     } else {
         state.max_retry.to_string()
     };
-    let max_retry_config_label = "Max Retries     ";
+    let max_retry_config_label = "Max Retries       ";
     let max_retry_config_line = Line::from(vec![
         Span::styled(max_retry_config_label, Style::default().fg(Color::Gray)),
         Span::styled(max_retry_display, Style::default().fg(Color::DarkGray)),
