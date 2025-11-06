@@ -9,6 +9,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-1.83%2B-orange.svg)](https://www.rust-lang.org/)
 [![Upstash Compatible](https://img.shields.io/badge/Upstash-Compatible-blue.svg)](https://upstash.com)
+[![CI](https://github.com/thebackslashs/slashless/actions/workflows/ci.yml/badge.svg)](https://github.com/thebackslashs/slashless/actions/workflows/ci.yml)
+[![CD](https://github.com/thebackslashs/slashless/actions/workflows/cd.yml/badge.svg)](https://github.com/thebackslashs/slashless/actions/workflows/cd.yml)
 
 </div>
 
@@ -36,16 +38,21 @@ docker run -d \
   -e SLASHLESS_REDIS_HOST=your-redis-host \
   -e SLASHLESS_REDIS_PORT=6379 \
   -e SLASHLESS_TOKEN=your-secret-token \
-  stashless/stashless
+  ghcr.io/thebackslashs/stashless:latest
 ```
 
 That's it! The API is available at `http://localhost:3000`.
 
+**Available Docker image tags:**
+- `latest` - Latest build from main branch
+- `0.1.0` (or current version) - Specific version tag
+- All images are automatically built and pushed to [GitHub Container Registry](https://github.com/thebackslashs/slashless/pkgs/container/stashless) on every push to main
+
 ### Docker Compose
 
 ```bash
-git clone https://github.com/yourusername/stashless.git
-cd stashless
+git clone https://github.com/thebackslashs/slashless.git
+cd slashless
 
 # Set your token
 export SLASHLESS_TOKEN=your-secret-token-here
@@ -58,8 +65,8 @@ docker-compose up -d
 ### From Source
 
 ```bash
-git clone https://github.com/yourusername/stashless.git
-cd stashless
+git clone https://github.com/thebackslashs/slashless.git
+cd slashless
 cargo build --release
 
 # Set environment variables
