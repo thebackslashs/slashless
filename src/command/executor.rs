@@ -1,4 +1,4 @@
-use crate::error::AppError;
+use crate::utils::AppError;
 use crate::command::registry::CommandRegistry;
 use redis::aio::ConnectionManager;
 use redis::Value as RedisValue;

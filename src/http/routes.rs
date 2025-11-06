@@ -1,8 +1,8 @@
-use crate::auth::{check_encoding_header, extract_bearer_token, validate_token};
+use crate::client::RedisPool;
 use crate::config::Config;
-use crate::errors::AppError;
 use crate::handlers::{command, pipeline, transaction};
-use crate::redis_client::RedisPool;
+use crate::utils::auth::{check_encoding_header, extract_bearer_token, validate_token};
+use crate::utils::AppError;
 use axum::{
     body::Body,
     extract::{Request, State},

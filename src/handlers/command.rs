@@ -1,6 +1,6 @@
-use crate::encoding::encode_result;
-use crate::errors::AppError;
-use crate::redis_client::RedisPool;
+use crate::client::RedisPool;
+use crate::utils::encoding::encode_result;
+use crate::utils::AppError;
 use axum::extract::State;
 use axum::Json;
 use serde_json::{json, Value};

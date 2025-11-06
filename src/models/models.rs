@@ -75,3 +75,4 @@ mod tests {
         assert!(parsed["error"].is_string());
     }
 }
+
