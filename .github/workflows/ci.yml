@@ -97,7 +97,7 @@ jobs:
 
       - name: Start server
         run: |
-          ./target/release/stashless > server.log 2>&1 &
+          ./target/release/stashless --boring > server.log 2>&1 &
           echo $! > server.pid
           sleep 2
         env:
