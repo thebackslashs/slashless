@@ -5,7 +5,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode},
 };
 use ratatui::{backend::CrosstermBackend, Terminal};
-use std::io::{self, stdout, Write};
+use std::io::{self, stdout, IsTerminal, Write};
 use tokio::sync::mpsc;
 
 use super::render::render_console;
@@ -30,6 +30,21 @@ impl Console {
     ) -> io::Result<(Self, Option<mpsc::UnboundedReceiver<()>>)> {
         match mode {
             ConsoleMode::Standard => {
+                // Check if stdout is a terminal before attempting to enable raw mode
+                if !stdout().is_terminal() {
+                    // No TTY available, fall back to boring mode
+                    tracing::warn!("No TTY detected, falling back to boring mode");
+                    return Self::new(
+                        server_address,
+                        redis_address,
+                        connections,
+                        max_retry,
+                        version,
+                        ConsoleMode::Boring,
+                        is_secure,
+                    );
+                }
+
                 // Clear screen first
                 print!("\x1B[2J\x1B[1;1H");
                 io::stdout().flush().unwrap();
