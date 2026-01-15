@@ -9,8 +9,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-1.83%2B-orange.svg)](https://www.rust-lang.org/)
 [![Upstash Compatible](https://img.shields.io/badge/Upstash-Compatible-blue.svg)](https://upstash.com)
-[![CI](https://github.com/thebackslashs/slashless/actions/workflows/ci.yml/badge.svg)](https://github.com/thebackslashs/slashless/actions/workflows/ci.yml)
-[![CD](https://github.com/thebackslashs/slashless/actions/workflows/cd.yml/badge.svg)](https://github.com/thebackslashs/slashless/actions/workflows/cd.yml)
+[![CI](https://github.com/elydelva/slashless/actions/workflows/ci.yml/badge.svg)](https://github.com/elydelva/slashless/actions/workflows/ci.yml)
+[![CD](https://github.com/elydelva/slashless/actions/workflows/cd.yml/badge.svg)](https://github.com/elydelva/slashless/actions/workflows/cd.yml)
 
 </div>
 
@@ -34,7 +34,7 @@ If you already have Redis running:
 
 ```bash
 # Pull the image
-docker pull ghcr.io/thebackslashs/stashless:latest
+docker pull ghcr.io/elydelva/stashless:latest
 
 # Run the container
 docker run -d \
@@ -42,7 +42,7 @@ docker run -d \
   -e SLASHLESS_REDIS_HOST=your-redis-host \
   -e SLASHLESS_REDIS_PORT=6379 \
   -e SLASHLESS_TOKEN=your-secret-token \
-  ghcr.io/thebackslashs/stashless:latest
+  ghcr.io/elydelva/stashless:latest
 ```
 
 That's it! The API is available at `http://localhost:3000`.
@@ -51,7 +51,7 @@ That's it! The API is available at `http://localhost:3000`.
 ### Docker Compose
 
 ```bash
-git clone https://github.com/thebackslashs/slashless.git
+git clone https://github.com/elydelva/slashless.git
 cd slashless
 
 # Set your token
@@ -64,7 +64,7 @@ docker-compose up -d
 ### From Source
 
 ```bash
-git clone https://github.com/thebackslashs/slashless.git
+git clone https://github.com/elydelva/slashless.git
 cd slashless
 cargo build --release
 
